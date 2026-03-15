@@ -1,132 +1,198 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro Calculator</title>
+    <title>Pro Advanced Calculator</title>
     <style>
-        /* CSS: Layout and Design */
+        :root {
+            --bg: #121212;
+            --card: #000;
+            --text: white;
+            --btn-num: #333;
+        }
+
+        /* Light Mode Classes */
+        .light-theme {
+            --bg: #f4f4f4;
+            --card: #ffffff;
+            --text: #000;
+            --btn-num: #e0e0e0;
+        }
+
         body {
-            background-color: #121212;
+            background-color: var(--bg);
+            color: var(--text);
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
+            justify-content: center;
             height: 100vh;
             margin: 0;
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
+            transition: 0.3s;
         }
 
         .calculator {
-            background-color: #000;
+            background-color: var(--card);
             padding: 20px;
             border-radius: 25px;
-            width: 320px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            width: 340px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
         }
 
         #screen {
             width: 100%;
-            height: 100px;
+            height: 80px;
             background: transparent;
             border: none;
-            color: #fff;
+            color: var(--text);
             text-align: right;
-            font-size: 45px;
-            margin-bottom: 10px;
+            font-size: 35px;
+            margin-bottom: 5px;
             padding: 10px;
             outline: none;
+        }
+
+        .history-display {
+            text-align: right;
+            font-size: 14px;
+            color: gray;
+            height: 20px;
+            margin-bottom: 10px;
+            padding-right: 10px;
         }
 
         .buttons {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
+            gap: 10px;
         }
 
         button {
-            height: 65px;
-            width: 65px;
-            border-radius: 50%;
+            height: 60px;
+            border-radius: 15px;
             border: none;
-            font-size: 22px;
+            font-size: 18px;
             font-weight: bold;
             cursor: pointer;
-            transition: 0.2s;
+            background-color: var(--btn-num);
+            color: var(--text);
         }
 
-        /* Colors */
-        .num { background-color: #333; color: white; }
         .op { background-color: #f1a33c; color: white; }
-        .special { background-color: #a5a5a5; color: black; }
-        .zero { width: 145px; border-radius: 40px; grid-column: span 2; }
+        .spec { background-color: #a5a5a5; color: black; }
+        
+        .theme-btn {
+            margin-bottom: 15px;
+            padding: 8px 15px;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            background: #007bff;
+            color: white;
+        }
 
-        button:active { opacity: 0.7; }
+        /* History List Styling */
+        .history-panel {
+            margin-top: 20px;
+            width: 320px;
+            max-height: 150px;
+            overflow-y: auto;
+            background: rgba(128, 128, 128, 0.1);
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
 
+    <button class="theme-btn" onclick="toggleTheme()">Switch Theme</button>
+
     <div class="calculator">
+        <div id="history-val" class="history-display"></div>
         <input type="text" id="screen" value="0" readonly>
         <div class="buttons">
-            <button onclick="clearAll()" class="special">AC</button>
-            <button onclick="backspace()" class="special">C</button>
-            <button onclick="setOp('%')" class="special">%</button>
+            <button onclick="clearAll()" class="spec">AC</button>
+            <button onclick="backspace()" class="spec">C</button>
+            <button onclick="mathFunc('sqrt')" class="spec">√</button>
             <button onclick="setOp('/')" class="op">÷</button>
 
-            <button onclick="addNum('7')" class="num">7</button>
-            <button onclick="addNum('8')" class="num">8</button>
-            <button onclick="addNum('9')" class="num">9</button>
+            <button onclick="addNum('7')">7</button>
+            <button onclick="addNum('8')">8</button>
+            <button onclick="addNum('9')">9</button>
             <button onclick="setOp('*')" class="op">×</button>
 
-            <button onclick="addNum('4')" class="num">4</button>
-            <button onclick="addNum('5')" class="num">5</button>
-            <button onclick="addNum('6')" class="num">6</button>
+            <button onclick="addNum('4')">4</button>
+            <button onclick="addNum('5')">5</button>
+            <button onclick="addNum('6')">6</button>
             <button onclick="setOp('-')" class="op">−</button>
 
-            <button onclick="addNum('1')" class="num">1</button>
-            <button onclick="addNum('2')" class="num">2</button>
-            <button onclick="addNum('3')" class="num">3</button>
+            <button onclick="addNum('1')">1</button>
+            <button onclick="addNum('2')">2</button>
+            <button onclick="addNum('3')">3</button>
             <button onclick="setOp('+')" class="op">+</button>
 
-            <button onclick="addNum('0')" class="num zero">0</button>
-            <button onclick="addNum('.')" class="num">.</button>
+            <button onclick="addNum('0')">0</button>
+            <button onclick="addNum('.')">.</button>
+            <button onclick="mathFunc('pi')">π</button>
             <button onclick="solve()" class="op">=</button>
         </div>
     </div>
 
+    <div class="history-panel" id="history-panel">
+        <strong>History:</strong>
+        <div id="history-list"></div>
+    </div>
+
     <script>
-        // JS: Logic
-        let display = document.getElementById('screen');
+        let screen = document.getElementById('screen');
+        let historyVal = document.getElementById('history-val');
+        let historyList = document.getElementById('history-list');
 
         function addNum(n) {
-            if (display.value === "0") display.value = n;
-            else display.value += n;
+            if (screen.value === "0") screen.value = n;
+            else screen.value += n;
         }
 
         function setOp(op) {
-            let lastChar = display.value.slice(-1);
-            if (["+", "-", "*", "/"].includes(lastChar)) {
-                display.value = display.value.slice(0, -1) + op;
-            } else {
-                display.value += op;
-            }
+            screen.value += op;
         }
 
         function clearAll() {
-            display.value = "0";
+            screen.value = "0";
+            historyVal.innerText = "";
         }
 
         function backspace() {
-            display.value = display.value.length > 1 ? display.value.slice(0, -1) : "0";
+            screen.value = screen.value.length > 1 ? screen.value.slice(0, -1) : "0";
+        }
+
+        function mathFunc(type) {
+            if(type === 'sqrt') screen.value = Math.sqrt(eval(screen.value));
+            if(type === 'pi') screen.value = Math.PI.toFixed(4);
         }
 
         function solve() {
             try {
-                display.value = eval(display.value);
+                let expression = screen.value;
+                let result = eval(expression);
+                
+                // Add to History
+                historyVal.innerText = expression + " =";
+                screen.value = result;
+
+                let log = document.createElement('div');
+                log.innerText = `${expression} = ${result}`;
+                historyList.prepend(log);
             } catch {
-                display.value = "Error";
-                setTimeout(clearAll, 1000);
+                screen.value = "Error";
             }
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('light-theme');
         }
     </script>
 </body>
